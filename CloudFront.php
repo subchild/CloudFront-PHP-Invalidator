@@ -18,57 +18,61 @@ class CloudFront {
 	
 	
 	/**
-	 * Constructs a CloudFront object
-	 * @param $accessKeyId
-	 * @param $secretKey
-	 * @param $serviceUrl
-	 * @param $distributionId
+	 * Constructs a CloudFront object and assigns required account values
+	 * @param $accessKeyId		{String} AWS access key id
+	 * @param $secretKey		{String} AWS secret key
+	 * @param $distributionId	{String} CloudFront distribution id
+	 * @param $serviceUrl 		{String} Optional parameter for overriding cloudfront api URL
 	 */
-	function __construct($accessKeyId, $secretKey, $serviceUrl="https://cloudfront.amazonaws.com/", $distributionId){
-		$this->serviceUrl     = $serviceUrl;
+	function __construct($accessKeyId, $secretKey, $distributionId, $serviceUrl="https://cloudfront.amazonaws.com/"){
 		$this->accessKeyId    = $accessKeyId;
 		$this->secretKey      = $secretKey;
 		$this->distributionId = $distributionId;
+		$this->serviceUrl     = $serviceUrl;		
 	}
 	
 	
 	/**
-	 * invalidateObject() Invalidates object with passed key on CloudFront
-	 * @param $key 	{String} Key of file to be deleted
+	 * Invalidates object with passed key on CloudFront
+	 * @param $key 	{String} Key of object to be invalidated
 	 */   
-	function invalidateObject($key){
+	function invalidateObject($key, $debug=false){
 		$key        = "/".$key;
-		$httpDate   = gmdate("D, d M Y G:i:s T");		
+		$date       = gmdate("D, d M Y G:i:s T");		
 		$requestUrl = $this->serviceUrl."2010-08-01/distribution/" . $this->distributionId . "/invalidation";
 		$body       = "<InvalidationBatch><Path>".$key."</Path><CallerReference>".time()."</CallerReference></InvalidationBatch>";
 		$req        = & new HTTP_Request($requestUrl);
 		$req->setMethod("POST");
-		$req->addHeader("Date", $httpDate);
-		$req->addHeader("Authorization", $this->makeKey($httpDate));
+		$req->addHeader("Date", $date);
+		$req->addHeader("Authorization", $this->makeKey($date));
 		$req->addHeader("Content-Type", "text/xml");
 		$req->setBody($body);
 		$response           = $req->sendRequest();
-		$this->responseBody = $req->getResponseBody();		
-		// for debugging...		
-		// $this->responseCode = $req->getResponseCode();
-		// $this->parsedXml    = simplexml_load_string($this->responseBody);
-		// $er = array();
-		// array_push($er, "CloudFront: Invalidating Object: $key");
-		// array_push($er, $requestUrl);
-		// array_push($er, "body: $body");
-		// array_push($er, "response: $response");
-		// array_push($er, "response string: " . $this->responseBody);
-		// array_push($er, "");
-		// array_push($er, "response code: " . $this->responseCode);
-		// array_push($er, "");
-		// return implode("\n",$er);
-		return ($this->responseCode === 201){
+		$this->responseBody = $req->getResponseBody();
+		
+		if ($debug==true){
+			$this->responseCode = $req->getResponseCode();
+			$this->parsedXml    = simplexml_load_string($this->responseBody);
+			$er = array();
+			array_push($er, "CloudFront: Invalidating Object: $key");
+			array_push($er, $requestUrl);
+			array_push($er, "body: $body");
+			array_push($er, "response: $response");
+			array_push($er, "response string: " . $this->responseBody);
+			array_push($er, "");
+			array_push($er, "response code: " . $this->responseCode);
+			array_push($er, "");
+			return implode("\n",$er);
+		}
+		else {
+			return ($this->responseCode === 201);
+		}
 	}
 	
 	
 	/**
-	 * makeKey() Returns header string containing encoded authentication key
-	 * @param 	$date 
+	 * Returns header string containing encoded authentication key
+	 * @param 	$date 		{Date}
 	 * @return 	{String}
 	 */
 	function makeKey($date){
@@ -78,8 +82,8 @@ class CloudFront {
 	
 	/**
 	 * hmacSha1() Returns HMAC string
-	 * @param 	$key
-	 * @param 	$data	 
+	 * @param 	$key 		{String}
+	 * @param 	$date		{Date}
 	 * @return 	{String}
 	 */	
 	function hmacSha1($key, $date){

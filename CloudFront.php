@@ -13,7 +13,6 @@ class CloudFront {
 	var $accessKeyId;
 	var $responseBody;
 	var $responseCode;
-	var $parsedXml;
 	var $distributionId;
 	
 	
@@ -48,17 +47,14 @@ class CloudFront {
 		$req->addHeader("Content-Type", "text/xml");
 		$req->setBody($body);
 		$response           = $req->sendRequest();
-		$this->responseBody = $req->getResponseBody();
-		
+		$this->responseCode = $req->getResponseCode();
 		if ($debug==true){
-			$this->responseCode = $req->getResponseCode();
-			$this->parsedXml    = simplexml_load_string($this->responseBody);
 			$er = array();
 			array_push($er, "CloudFront: Invalidating Object: $key");
 			array_push($er, $requestUrl);
 			array_push($er, "body: $body");
 			array_push($er, "response: $response");
-			array_push($er, "response string: " . $this->responseBody);
+			array_push($er, "response string: " . $req->getResponseBody());
 			array_push($er, "");
 			array_push($er, "response code: " . $this->responseCode);
 			array_push($er, "");

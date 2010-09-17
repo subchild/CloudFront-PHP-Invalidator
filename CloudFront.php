@@ -33,12 +33,12 @@ class CloudFront {
 	
 	/**
 	 * Invalidates object with passed key on CloudFront
-	 * @param $key 	{String} Key of object to be invalidated
+	 * @param $key 	{String} Key of object to be invalidated. With or without a leading slash.
 	 */   
 	function invalidateObject($key, $debug=false){
-		$key        = "/".$key;
+		$key        = (preg_match("/^\//", $key)) ? $key : "/" . $key;
 		$date       = gmdate("D, d M Y G:i:s T");		
-		$requestUrl = $this->serviceUrl."2010-08-01/distribution/" . $this->distributionId . "/invalidation";
+		$requestUrl = $this->serviceUrl  ."2010-08-01/distribution/" . $this->distributionId . "/invalidation";
 		$body       = "<InvalidationBatch><Path>".$key."</Path><CallerReference>".time()."</CallerReference></InvalidationBatch>";
 		$req        = & new HTTP_Request($requestUrl);
 		$req->setMethod("POST");
@@ -61,7 +61,7 @@ class CloudFront {
 			return implode("\n",$er);
 		}
 		else {
-			return ($this->responseCode === 201);
+			return ($this->responseCode == 201);
 		}
 	}
 	
@@ -77,7 +77,7 @@ class CloudFront {
 	
 	
 	/**
-	 * hmacSha1() Returns HMAC string
+	 * Returns HMAC string
 	 * @param 	$key 		{String}
 	 * @param 	$date		{Date}
 	 * @return 	{String}

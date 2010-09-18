@@ -33,14 +33,24 @@ class CloudFront {
 	
 	/**
 	 * Invalidates object with passed key on CloudFront
-	 * @param $key 	{String} Key of object to be invalidated. With or without a leading slash.
+	 * @param $key 	{String|Array} Key of object to be invalidated, or set of such keys
 	 */   
-	function invalidateObject($key, $debug=false){
-		$key        = (preg_match("/^\//", $key)) ? $key : "/" . $key;
-		$date       = gmdate("D, d M Y G:i:s T");		
-		$requestUrl = $this->serviceUrl  ."2010-08-01/distribution/" . $this->distributionId . "/invalidation";
-		$body       = "<InvalidationBatch><Path>".$key."</Path><CallerReference>".time()."</CallerReference></InvalidationBatch>";
-		$req        = & new HTTP_Request($requestUrl);
+	function invalidate($keys, $debug=false){
+		if (!is_array($keys)){
+			$keys = array($key);
+		}
+		$date       = gmdate("D, d M Y G:i:s T");
+		$requestUrl = $this->serviceUrl."2010-08-01/distribution/" . $this->distributionId . "/invalidation";
+		// assemble request body
+		$body  = "<InvalidationBatch>";
+		foreach($keys as $key){
+			$key   = (preg_match("/^\//", $key)) ? $key : "/" . $key;
+			$body .= "<Path>".$key."</Path>";
+		}
+		$body .= "<CallerReference>".time()."</CallerReference>";
+		$body .= "</InvalidationBatch>";
+		// make and send request		
+		$req = & new HTTP_Request($requestUrl);
 		$req->setMethod("POST");
 		$req->addHeader("Date", $date);
 		$req->addHeader("Authorization", $this->makeKey($date));
@@ -61,7 +71,7 @@ class CloudFront {
 			return implode("\n",$er);
 		}
 		else {
-			return ($this->responseCode == 201);
+			return ($this->responseCode === 201);
 		}
 	}
 	

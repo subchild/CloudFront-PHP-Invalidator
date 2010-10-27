@@ -37,7 +37,7 @@ class CloudFront {
 	 */   
 	function invalidate($keys, $debug=false){
 		if (!is_array($keys)){
-			$keys = array($key);
+			$keys = array($keys);
 		}
 		$date       = gmdate("D, d M Y G:i:s T");
 		$requestUrl = $this->serviceUrl."2010-08-01/distribution/" . $this->distributionId . "/invalidation";

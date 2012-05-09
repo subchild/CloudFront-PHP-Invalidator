@@ -4,7 +4,7 @@
  * A PHP5 class for invalidating Amazon CloudFront objects via its API.
  */
 
-require_once 'HTTP/Request.php';  // grab with "pear install --onlyreqdeps HTTP_Request"
+require_once 'HTTP/Request2.php';  // grab with "pear install --onlyreqdeps HTTP_Request2"
 
 
 class CloudFront {
@@ -50,21 +50,19 @@ class CloudFront {
 		$body .= "<CallerReference>".time()."</CallerReference>";
 		$body .= "</InvalidationBatch>";
 		// make and send request		
-		$req = & new HTTP_Request($requestUrl);
-		$req->setMethod("POST");
-		$req->addHeader("Date", $date);
-		$req->addHeader("Authorization", $this->makeKey($date));
-		$req->addHeader("Content-Type", "text/xml");
+		$req = & new HTTP_Request2($requestUrl, HTTP_Request2::METHOD_POST);
+		$req->setHeader("Date", $date);
+		$req->setHeader("Authorization", $this->makeKey($date));
+		$req->setHeader("Content-Type", "text/xml");
 		$req->setBody($body);
-		$response           = $req->sendRequest();
-		$this->responseCode = $req->getResponseCode();
+		$response           = $req->send();
+		$this->responseCode = $response->getStatus();
 		if ($debug==true){
 			$er = array();
 			array_push($er, "CloudFront: Invalidating Object: $key");
 			array_push($er, $requestUrl);
 			array_push($er, "body: $body");
-			array_push($er, "response: $response");
-			array_push($er, "response string: " . $req->getResponseBody());
+			array_push($er, "response: " . $response->getBody());
 			array_push($er, "");
 			array_push($er, "response code: " . $this->responseCode);
 			array_push($er, "");
